@@ -1,0 +1,17 @@
+{
+  "name": "awesome-vite-design",
+  "version": "1.0.0",
+  "description": "source code analysis of vite and vite ecosystem design",
+  "main": "index.js",
+  "author": "raintygao",
+  "license": "MIT",
+  "devDependencies": {
+    "@vuepress/plugin-back-to-top": "^1.8.2",
+    "@vuepress/plugin-medium-zoom": "^1.8.2",
+    "vuepress": "^1.8.2"
+  },
+  "scripts": {
+    "docs:dev": "vuepress dev docs",
+    "docs:build": "vuepress build docs"
+  }
+}
