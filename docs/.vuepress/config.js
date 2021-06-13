@@ -9,7 +9,8 @@ module.exports = {
           children: [
             '',
             'prepare',
-            'progress'
+            'preoptimize',
+            'pluginContainer'
           ],
         }
       ]
@@ -18,7 +19,7 @@ module.exports = {
     nav: [
       { text: 'Home', link: '/' }
     ],
-    repo: 'https://github.com/raintygao',
+    repo: 'https://github.com/raintygao/awesome-vite-design',
     smoothScroll: true,
     activeHeaderLinks: true
   },

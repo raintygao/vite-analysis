@@ -18,7 +18,7 @@ yarn link
 
 ## init 
 
-Vite脚手架提供了一些[预设模版](https://cn.vitejs.dev/guide/#scaffolding-your-first-vite-project)，包括但不限于`vue`、`react`、`preact`、`svelte`，我们init一个react+ts的模版
+Vite脚手架提供了一些[预设模版](https://cn.vitejs.dev/guide/#scaffolding-your-first-vite-project)，包括但不限于`vue`、`react`、`preact`、`svelte`等框架，我们init一个react+ts的模版
 
 ```bash
 yarn create @vitejs/app my-react-app --template react-ts
