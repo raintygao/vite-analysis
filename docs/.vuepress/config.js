@@ -9,7 +9,7 @@ module.exports = {
           children: [
             '',
             'prepare',
-            'preoptimize',
+            'preBuild',
             'pluginContainer'
           ],
         }
