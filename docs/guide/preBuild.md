@@ -75,8 +75,8 @@ var __commonJS = (cb, mod) => function __require() {
 
 ### esbuildDepPlugin
 
-## hash比较
-在构建完成后，会写入`_metadata.json`文件到cache目录，该文件主要包括`hash`、`browserHash`、`optimized`三个部分。
-- `hash`主要由`config`和`依赖lock`的内容而来，每次预构建前都会比较`hash`以判断是否需要跳过
-- `browserHash`主要是由`hash`和运行时发现的依赖而来，在浏览器请求已优化的依赖时会用到
+## 缓存
+在构建完成后，会写入`_metadata.json`到cache目录，内容主要包括`hash`、`browserHash`、`optimized`三个部分。
+- `hash`由`config`和`依赖的lock`而来，每次预构建前都会比较`hash`以判断是否需要跳过
+- `browserHash`由`hash`和搜寻依赖而来，在浏览器请求已优化的依赖时会用到
 - `optimized`主要包含了已构建依赖的src、output地址以及`needsInterop`，其表示是否需要作为非esm模块额外处理，在处理浏览器请求时也会用到
