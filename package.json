@@ -1,7 +1,7 @@
 {
   "name": "awesome-vite-design",
   "version": "1.0.0",
-  "description": "source code analysis of vite and vite ecosystem design",
+  "description": "Vite及其生态的源码阅读与解析｜source code analysis of vite and vite ecosystem design",
   "main": "index.js",
   "author": "raintygao",
   "license": "MIT",

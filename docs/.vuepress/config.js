@@ -1,6 +1,6 @@
 module.exports = {
-  title: 'awesome-vite-design',
-  description: 'source code analysis of vite and vite ecosystem',
+  title: 'Vite技术揭秘',
+  description: 'Vite及其生态的源码阅读与解析',
   themeConfig: {
     sidebar: {
       '/guide/': [
