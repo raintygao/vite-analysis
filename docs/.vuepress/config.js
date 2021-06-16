@@ -10,7 +10,9 @@ module.exports = {
             '',
             'prepare',
             'preBuild',
-            'pluginContainer'
+            'resolved',
+            'pluginContainer',
+            'esModuleLexer'
           ],
         }
       ]
