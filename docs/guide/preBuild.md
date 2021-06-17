@@ -156,6 +156,58 @@ var __commonJS = (cb, mod) => function __require() {
 
 ### esbuildDepPlugin
 这里集中了build的主要逻辑,WIP
+```ts
+function resolveEntry(id: string, isEntry: boolean, resolveDir: string) {
+  const flatId = flattenId(id)
+  if (flatId in qualified) {
+    return isEntry
+      ? {
+          path: flatId,
+          namespace: 'dep'
+        }
+      : {
+          path: require.resolve(qualified[flatId], {
+            paths: [resolveDir]
+          })
+        }
+  }
+}
+```
+这段代码有两步判断，首先，如果不是预构建的入口模块(即build API的`entryPoints`)，不会有返回。
+第二步，如果该模块是预构建的入口模块并且没有引用，说明这是该依赖的首次构建，指定其`path`为bare name，比如react就是react，`namespace`指定为dep返回，后面onload阶段会匹配到特殊处理；如果该模块是预构建的入口并被二次引用，比如react-dom中引用了react，而react本身就会被作为入口进行预构建，这时直接返回其实际路径`'/Users/admin/Desktop/vite-react-ts/node_modules/react/index.js'`作为`path`去参与正常构建
+```ts
+build.onResolve(
+    { filter: /^[\w@][^:]/ },
+    async ({ path: id, importer, kind, resolveDir }) => {
+      const isEntry = !importer
+      let entry
+      if ((entry = resolveEntry(id, isEntry, resolveDir))) return entry
+      const aliased = await _resolve(id, undefined, true)
+      if (aliased && (entry = resolveEntry(aliased, isEntry, resolveDir))) {
+        return entry
+      }
+      const resolved = await resolve(id, importer, kind)
+      if (resolved) {
+        if (resolved.startsWith(browserExternalId)) {
+          return {
+            path: id,
+            namespace: 'browser-external'
+          }
+        }
+        if (isExternalUrl(resolved)) {
+          return {
+            path: resolved,
+            external: true
+          }
+        }
+        return {
+          path: path.resolve(resolved)
+        }
+      }
+    }
+  )
+```
+WIP
 ## 缓存
 在构建完成后，会写入`_metadata.json`到cache目录，内容主要包括`hash`、`browserHash`、`optimized`三个部分。
 - `hash`由`config`和`依赖的lock`而来，每次预构建前都会比较`hash`以判断是否需要跳过
