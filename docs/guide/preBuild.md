@@ -260,7 +260,8 @@ build.onLoad({ filter: /.*/, namespace: 'dep' }, ({ path: id }) => {
 2. 对于入口模块，手动处理读取，保持入口模块的id而不是文件路径，以便esbuild能输出需要的文件结构。
 >  esbuild generates nested directory output with lowest common ancestor base this is unpredictable and makes it difficult to analyze entry / output mapping. So what we do here is: 1. flatten all ids to eliminate slash 2. in the plugin, read the entry ourselves as virtual files to retain the path.
 
-(这个没有复现，结合模块bare name代码会通过`flattenId`以去掉`/`的逻辑时的这段注释，并且浏览器会rewrite url为缓存目录里的模块路径，盲猜是为了兼容esbuild输出的特性并方便Vite的处理)。
+这个没能复现，不过`flattenId`有段注释，解释了esbuild build的路径问题，模块bare name会通过`flattenId`以去掉`/`，再在插件里同步处理；结合插件的这个逻辑，大概就是为了兼容esbuild输出的问题并方便Vite的处理)。
+
 3. 重导出以将虚拟模块和实际模块分离，因为实际模块可能会通过相对导入获得引用，否则esbuild将构建重复模块。
 (在esbuild里，默认模块都为实际模块，他们的namespace为`file`，在[区分直接引用和二次引用的入口模块](#区分直接引用和二次引用的入口模块)里将直接引用的入口模块的`namespace`指定为`dep`，这时他们就成了虚拟模块。)
 (这块尝试复现，在react-dom里也会引用react的情况下是否代理没有明显变化=_=)
