@@ -6,6 +6,7 @@ module.exports = {
       '/guide/': [
         {
           collapsable: false,
+          sidebarDepth: 4,
           children: [
             '',
             'prepare',
