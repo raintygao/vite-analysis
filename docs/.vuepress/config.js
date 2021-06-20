@@ -13,7 +13,8 @@ module.exports = {
             'preBuild',
             'resolved',
             'pluginContainer',
-            'esModuleLexer'
+            'esModuleLexer',
+            'scriptInject'
           ],
         }
       ]

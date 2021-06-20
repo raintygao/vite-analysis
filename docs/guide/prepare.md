@@ -31,7 +31,7 @@ yarn && yarn link vite
 我们在demo项目的`package.json`里加一条`scripts`，以开启Vite的debug模式
 ```json
 {
-  "debug": "vite --debug --profile"
+  "debug": "vite --debug --profile --force"
 }
 ```
 <br>
