@@ -1,6 +1,7 @@
 module.exports = {
   title: 'Vite技术揭秘',
   description: 'Vite及其生态的源码阅读与解析',
+  base:"/awesome-vite-design/",
   themeConfig: {
     sidebar: {
       '/guide/': [
