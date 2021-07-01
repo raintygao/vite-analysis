@@ -11,6 +11,7 @@ module.exports = {
             '',
             'prepare',
             'preBuild',
+            'middlewares',
             'resolved',
             'pluginContainer',
             'esModuleLexer',

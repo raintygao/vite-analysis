@@ -1,13 +1,4 @@
-# HTML
-Vite2以原生`http server`的方式启动服务，结合[connect](https://www.npmjs.com/package/connect)以plugins方式注册中间件。在服务启动前，注册了`indexHtmlMiddleWare`中间件。
-```ts
-const middlewares = connect() as Connect.Server
-const httpServer = middlewareMode ? null: await resolveHttpServer(serverConfig, middlewares, httpsOptions)
-middlewares.use(indexHtmlMiddleware(server))
-```
-
-<br>
-
+# HTML中间件
 
 ```ts
 export function indexHtmlMiddleware(
