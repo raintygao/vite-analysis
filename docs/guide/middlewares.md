@@ -22,9 +22,10 @@ middlewares.use(fn)
 
 在Vite里一般以如下方式定义和使用中间件
 ```ts
+//define
 import { Connect } from 'types/connect'
 export function customMiddleware(config: any): Connect.NextHandleFunction {
-  const data = doSome(config);
+  const data = doSomething(config);
   // Keep the named function. The name is visible in debug logs via `DEBUG=connect:dispatcher ...`
   return function finalCustomMiddleware(req, res, next) {
     console.log('req',data);
@@ -35,4 +36,6 @@ export function customMiddleware(config: any): Connect.NextHandleFunction {
 //use
 middlewares.use(customMiddleware(config));
 ```
-在server初始化的时候传入config,customMiddleware直接根据初始化的数据执行，保存了data数据，返回一个实际函数作为请求时的中间件，在`next`前处理request,在`next`后处理response，有点类似koa的洋葱模型。
+在server初始化的时候传入config,customMiddleware函数根据初始化的config执行，返回一个新函数作为请求时的中间件，通过闭包可以获得初始化的data。当浏览器请求发送过来，在`next`前处理request,在`next`后处理response，类似koa的洋葱模型。
+
+在Vite中默认使用很多内置中间件，例如[htmlMiddleware](./htmlMiddleware.md)、[transMiddleware](./transformMiddleware.md)等

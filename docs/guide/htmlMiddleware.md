@@ -1,4 +1,5 @@
 # HTML中间件
+`indexHtmlMiddleware`中间件匹配html请求，返回转义处理后的html
 
 ```ts
 export function indexHtmlMiddleware(
@@ -22,7 +23,6 @@ export function indexHtmlMiddleware(
   }
 }
 ```
-`indexHtmlMiddleware`作为中间件匹配html请求，根据读取出html内容返回转义后的html
 
 
 ```ts
@@ -117,4 +117,4 @@ function injectToHead(
   return tagsHtml + `\n` + html
 }
 ```
-`injectToHead`中通过正则匹配，将`<script type="module" src="/@vite/client"></script>`插入到了head的最前面，这个脚本非常重要
+`injectToHead`中通过正则匹配，将`<script type="module" src="/@vite/client"></script>`插入到了head的最前面，这个脚本很重要，包含了热更新等功能
