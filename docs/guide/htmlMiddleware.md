@@ -117,4 +117,5 @@ function injectToHead(
   return tagsHtml + `\n` + html
 }
 ```
-`injectToHead`中通过正则匹配，将`<script type="module" src="/@vite/client"></script>`插入到了head的最前面，这个脚本很重要，包含了热更新等功能
+`injectToHead`中通过正则匹配，将`<script type="module" src="/@vite/client"></script>`插入到了head的最前面，这个脚本很重要，包含了热更新等功能.
+我们也可以开发自定义插件，定义[transformIndexHtml](https://cn.vitejs.dev/guide/api-plugin.html#transformindexhtml)来处理html内容
