@@ -1,6 +1,6 @@
 # 预构建
 
-预构建有两个原因，这个Vite文档里也有[详细说明](https://cn.vitejs.dev/guide/dep-pre-bundling.html#the-why)。简单说，一是因为dev阶段Vite默认所有模块都为ES module，因此需要对CJS和UMD的模块进行转换统一为ESM，二是因为很多ESM模块内部会相互导入，为了避免同时大量请求，统一为一个模块。
+预构建有两个原因，这个Vite文档里也有[详细说明](https://cn.vitejs.dev/guide/dep-pre-bundling.html#the-why)。简单说，一是因为dev阶段Vite默认所有模块都为ES module，因此需要对CJS和UMD的模块进行转换统一为ESM，二是因为很多ESM模块内部会存在大量导入，例如当执行`import { debounce } from 'lodash-es'`时，浏览器同时会发出 600 多个 HTTP 请求，为了避免同时大量请求造成拥塞，构建为一个bundle。
 
 Vite1采用[@rollup/plugin-commonjs](https://github.com/rollup/plugins/tree/master/packages/commonjs)来进行cjs->esm的转换，Vite2改为采用[esbuild](https://esbuild.github.io/api/)来进行run server前的预构建，无论是速度还是灵活性都有很大提升。
 

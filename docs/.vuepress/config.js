@@ -11,6 +11,7 @@ module.exports = {
             '',
             'prepare',
             'preBuild',
+            'pluginContainer',
             {
               title: '中间件机制',
               path: 'middlewares',
@@ -19,9 +20,7 @@ module.exports = {
             },
             'transformMiddleware',
             'resolved',
-            'pluginContainer',
             'esModuleLexer',
-            'clientScript',
           ],
         },
       ],

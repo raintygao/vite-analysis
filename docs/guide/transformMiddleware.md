@@ -15,6 +15,8 @@ middlewares.use(transformMiddleware(server))
 
 得益于Vite的[中间件机制](./middlewares.md),在开发阶段中，所有模块请求经过`transformMiddleware`中间件，这个中间件对模块内容进行转换，返回最终浏览器兼容的结果
 
+## transformMiddleware中间件
+
 ```ts
 // src/node/server/middlewares/transform
 export function transformMiddleware(
@@ -23,19 +25,18 @@ export function transformMiddleware(
   //...
   const result = await transformRequest(url, server, {
     html: req.headers.accept?.includes('text/html')
-  }) //转换
+  })    //代码转换逻辑
   if (result) {
     const type = isDirectCSSRequest(url) ? 'css' : 'js'
     const isDep =
       DEP_VERSION_RE.test(url) ||
       (cacheDirPrefix && url.startsWith(cacheDirPrefix))
-    return send(
+    return send(   //send = res.end
       req,
       res,
       result.code,
       type,
       result.etag,
-      // allow browser to cache npm deps!
       isDep ? 'max-age=31536000,immutable' : 'no-cache',
       result.map
     )
@@ -43,7 +44,9 @@ export function transformMiddleware(
 }
 ```
 
-`transformRequest`集中了模块的转换流程，返回包括模块内容的转换结果与是否需要缓存。
+自定义中间件`transformMiddleware`中，主要逻辑集中在`transformRequest`，它定义了模块的转换流程，返回模块内容的转换结果code以及是否需要缓存etag
+
+## transformRequest
 
 ```ts
 export async function transformRequest(
@@ -51,7 +54,7 @@ export async function transformRequest(
   { config, pluginContainer, moduleGraph, watcher }: ViteDevServer,
   options: TransformOptions = {}
 ): Promise<TransformResult | null> {
-  // check if we have a fresh cache
+  // check cache
   const module = await moduleGraph.getModuleByUrl(url)
   const cached =
     module && (ssr ? module.ssrTransformResult : module.transformResult)
@@ -70,16 +73,6 @@ export async function transformRequest(
   const loadStart = isDebug ? Date.now() : 0
   const loadResult = await pluginContainer.load(id, ssr)
   if (loadResult == null) {
-    // if this is an html request and there is no load result, skip ahead to
-    // SPA fallback.
-    if (options.html && !id.endsWith('.html')) {
-      return null
-    }
-    // try fallback loading it from fs as string
-    // if the file is a binary, there should be a plugin that already loaded it
-    // as string
-    // only try the fallback if access is allowed, skip for out of root url
-    // like /service-worker.js or /api/users
     if (options.ssr || isFileAccessAllowed(file, config.server.fsServe)) {
       try {
         code = await fs.readFile(file, 'utf-8')
@@ -128,13 +121,6 @@ export async function transformRequest(
     code = transformResult.code!
     map = transformResult.map
   }
-
-  if (map && mod.file) {
-    map = (typeof map === 'string' ? JSON.parse(map) : map) as SourceMap
-    if (map.mappings && !map.sourcesContent) {
-      await injectSourcesContent(map, mod.file)
-    }
-  }
   return (mod.transformResult = {
     code,
     map,
@@ -143,7 +129,17 @@ export async function transformRequest(
 }
 ```
 
+transformRequest主要分为四个步骤，分别为`check cache`、`resolve`、`load`、`transform`。
 
+`check cache`用来检查缓存，如果该模块已经被转换过，直接返回缓存结果。
+
+`resolve`用来返回该模块的路径，对于一个模块，我们请求的路径可能会有很多种，比如绝对路径、各种层级的相对路径，因此`resolve`会根据`/src/main.tsx`这样一个请求路径,将项目里实际的模块路径作为`id`返回。
+
+`load`用来加载模块的内容，借用插件系统，将`resolve`返回的id传入[插件系统的load](./pluginContainer.md)，返回读取的模块内容，一般没有自定义插件这步会返回null，因此会接着通过fs直接读取模块内容。
+
+### transform
+
+`transform`会转换模块的内容，`ts`、`tsx`、`scss`等文件也是在这一步转换成浏览器可以执行的js文件。这一步也会借用[插件系统的transform](./pluginContainer.md)，调用各个插件的transform方法，返回结果。
 
 
 其中依次调用了所有插件的`transform`方法，对代码内容做转义，这里基于Vite 的 pluginContainer，开发自定义插件也可以定义与rollup兼容的[transform](https://rollupjs.org/guide/en/#transform)方法。
