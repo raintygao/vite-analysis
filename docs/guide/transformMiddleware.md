@@ -133,79 +133,17 @@ transformRequest主要分为四个步骤，分别为`check cache`、`resolve`、
 
 `check cache`用来检查缓存，如果该模块已经被转换过，直接返回缓存结果。
 
-`resolve`用来返回该模块的路径，对于一个模块，我们请求的路径可能会有很多种，比如绝对路径、各种层级的相对路径，因此`resolve`会根据`/src/main.tsx`这样一个请求路径,将项目里实际的模块路径作为`id`返回。
+`resolve`用来获取解析后的路径，可见[pluginContainer的resolveId](./pluginContainer.md#resolveid)
 
-`load`用来加载模块的内容，借用插件系统，将`resolve`返回的id传入[插件系统的load](./pluginContainer.md)，返回读取的模块内容，一般没有自定义插件这步会返回null，因此会接着通过fs直接读取模块内容。
+`load`用来加载模块的内容，借用插件系统，将`resolve`返回的id传入[pluginContainer的load](./pluginContainer.md#load)，读取模块的内容，一般没有自定义插件这步会返回null，因此会接着通过fs直接读取模块内容
 
 ### transform
 
-`transform`会转换模块的内容，`ts`、`tsx`、`scss`等文件也是在这一步转换成浏览器可以执行的js文件。这一步也会借用[插件系统的transform](./pluginContainer.md)，调用各个插件的transform方法，返回结果。
+`transform`会转换模块的内容，`ts`、`tsx`、`scss`等文件也是在这一步转换成浏览器可以执行的js文件，这一步调用了[pluginContainer的transform](./pluginContainer.md#transform)，这里主要分析一下用到的几个插件。
 
 
-其中依次调用了所有插件的`transform`方法，对代码内容做转义，这里基于Vite 的 pluginContainer，开发自定义插件也可以定义与rollup兼容的[transform](https://rollupjs.org/guide/en/#transform)方法。
 vite:esbuild:`code:'import React from "react";\nimport ReactDOM from "react-dom";\nimport "./index.css";\nimport App from "./App";\nReactDOM.render(/* @__PURE__ */ React.createElement(React.StrictMode, null, /* @__PURE__ */ React.createElement(App, null)), document.getElementById("root"));\n'`
 vite:import-analysis:`'import __vite__cjsImport0_react from "/node_modules/.vite/react.js?v=a265756d"; const React = __vite__cjsImport0_react.__esModule ? __vite__cjsImport0_react.default : __vite__cjsImport0_react;\nimport __vite__cjsImport1_reactDom from "/node_modules/.vite/react-dom.js?v=a265756d"; const ReactDOM = __vite__cjsImport1_reactDom.__esModule ? __vite__cjsImport1_reactDom.default : __vite__cjsImport1_reactDom;\nimport "/src/index.css";\nimport App from "/src/App.tsx";\nReactDOM.render(/* @__PURE__ */ React.createElement(React.StrictMode, null, /* @__PURE__ */ React.createElement(App, null)), document.getElementById("root"));\n'`
 
 `'import __vite__cjsImport0_react from "/node_modules/.vite/react.js?v=a265756d"; const React = __vite__cjsImport0_react.__esModule ? __vite__cjsImport0_react.default : __vite__cjsImport0_react;\nimport __vite__cjsImport1_reactDom from "/node_modules/.vite/react-dom.js?v=a265756d"; const ReactDOM = __vite__cjsImport1_reactDom.__esModule ? __vite__cjsImport1_reactDom.default : __vite__cjsImport1_reactDom;\nimport "/src/index.css";\nimport App from "/src/App.tsx";\nimport {a} from "/src/afafa.ts";\nconsole.log("a", a);\nReactDOM.render(/* @__PURE__ */ React.createElement(React.StrictMode, null, /* @__PURE__ */ React.createElement(App, null)), document.getElementById("root"));\n'`
 以及vite:define、vite:json等中间件也会执行，他们会发挥各自的职能。
-
-```ts
-  class TransformContext extends Context {
-    filename: string
-    originalCode: string
-    originalSourcemap: SourceMap | null = null
-    sourcemapChain: NonNullable<SourceDescription['map']>[] = []
-    combinedMap: SourceMap | null = null
-
-    constructor(filename: string, code: string, inMap?: SourceMap | string) {
-      super()
-      this.filename = filename
-      this.originalCode = code
-      if (inMap) {
-        this.sourcemapChain.push(inMap)
-      }
-    }
-
-    _getCombinedSourcemap(createIfNull = false) {
-      let combinedMap = this.combinedMap
-      for (let m of this.sourcemapChain) {
-        if (typeof m === 'string') m = JSON.parse(m)
-        if (!('version' in (m as SourceMap))) {
-          // empty, nullified source map
-          combinedMap = this.combinedMap = null
-          this.sourcemapChain.length = 0
-          break
-        }
-        if (!combinedMap) {
-          combinedMap = m as SourceMap
-        } else {
-          combinedMap = combineSourcemaps(this.filename, [
-            {
-              ...(m as RawSourceMap),
-              sourcesContent: combinedMap.sourcesContent
-            },
-            combinedMap as RawSourceMap
-          ]) as SourceMap
-        }
-      }
-      if (!combinedMap) {
-        return createIfNull
-          ? new MagicString(this.originalCode).generateMap({
-              includeContent: true,
-              hires: true,
-              source: this.filename
-            })
-          : null
-      }
-      if (combinedMap !== this.combinedMap) {
-        this.combinedMap = combinedMap
-        this.sourcemapChain.length = 0
-      }
-      return this.combinedMap
-    }
-
-    getCombinedSourcemap() {
-      return this._getCombinedSourcemap(true) as SourceMap
-    }
-  }
-```
