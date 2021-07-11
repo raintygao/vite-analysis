@@ -18,9 +18,7 @@ module.exports = {
               collapsable: true,
               children: ['middlewares', 'htmlMiddleware'],
             },
-            'transformMiddleware',
-            'resolved',
-            'esModuleLexer',
+            'transformMiddleware'
           ],
         },
       ],

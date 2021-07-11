@@ -2,7 +2,7 @@
 
 ![拦截请求](../.vuepress/public/requests.png)
 
-在开发阶段，我们的代码不会被打包成bundle，那么当浏览器请求`ts`、`tsx`、`scss`等模块时如何返回浏览器支持的结果呢？
+在开发阶段，我们的代码不会被打包成bundle，那么当浏览器请求`ts`、`tsx`、`scss`、`json`、`svg`等模块时如何返回浏览器支持的结果呢？
 
 ![response-type](../.vuepress/public/response-type.png)
 
@@ -133,17 +133,74 @@ transformRequest主要分为四个步骤，分别为`check cache`、`resolve`、
 
 `check cache`用来检查缓存，如果该模块已经被转换过，直接返回缓存结果。
 
-`resolve`用来获取解析后的路径，可见[pluginContainer的resolveId](./pluginContainer.md#resolveid)
+`resolve`通过[pluginContainer的resolveId](./pluginContainer.md#resolveid)解析模块路径
 
-`load`用来加载模块的内容，借用插件系统，将`resolve`返回的id传入[pluginContainer的load](./pluginContainer.md#load)，读取模块的内容，一般没有自定义插件这步会返回null，因此会接着通过fs直接读取模块内容
+`load`用来加载模块的内容，将`resolve`返回的id传入[pluginContainer的load](./pluginContainer.md#load)，读取模块的内容，一般没有自定义插件返回null的情况下，会接着通过fs直接读取模块内容
 
 ### transform
 
-`transform`会转换模块的内容，`ts`、`tsx`、`scss`等文件也是在这一步转换成浏览器可以执行的js文件，这一步调用了[pluginContainer的transform](./pluginContainer.md#transform)，这里主要分析一下用到的几个插件。
+`transform`会转换模块的内容，`ts`、`tsx`、`scss`等文件也是在这一步转换成浏览器可以执行的js文件，这一步调用了[pluginContainer的transform](./pluginContainer.md#transform)，这里主要分析一下转换用到的几个插件。
 
+#### vite:esbuild
+TS transform
+```ts
+//before transform
+export interface Ha {
+  a:string
+}
+const a:Ha = {
+  a:'2'
+};
+export {
+  a
+};
+console.log('aaa',a);
+//after transform
+const a = {
+   a: "2"
+};
+export { a };
+console.log("aaa", a);
+```
+TSX transform
+```ts
+//before transform 
+import React from 'react'
+import ReactDOM from 'react-dom'
+import './index.css'
+import App from './App'
+import {a} from './afafa';
+import './b.js';
+import './a.json';
+ReactDOM.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+  document.getElementById('root')
+)
+//after transform
+import React from "react";
+import ReactDOM from "react-dom";
+import "./index.css";
+import App from "./App";
+import {a} from "./afafa";
+import "./b.js";
+import "./a.json";
+console.log("a", a);
+ReactDOM.render(/* @__PURE__ */ React.createElement(React.StrictMode, null, /* @__PURE__ */ React.createElement(App, null)), document.getElementById("root"));
+```
+上面两个简单的文件转换的例子，我们可以看到，ts文件的interface消失了，tsx中的tsx标签被转换为了`React.createElement`，这些都是符合预期的，通过`vite:esbuild`插件，
+它们均被被转换为了ts和tsx均被转换为了js文件。
+```ts
+const result = await transform(code, {
+  loader: "tsx",
+  sourcemap: true,
+  sourcefile: "/Users/admin/Desktop/vite-react-ts/src/main.tsx",
+});
+```
+`vite:esbuild`会对`tsx`、`jsx`、`ts`模块编译，其中主要是通过esbuild[transform API](https://esbuild.github.io/api/#transform-api)输出转换后的结果。
+然而，现在仍然有个问题，代码里引用的`react`、`react-dom`这种bare name，以及`./App`这种相对引用在浏览器里都是无法识别的，因此还需要对这些`import`进行转换。
 
-vite:esbuild:`code:'import React from "react";\nimport ReactDOM from "react-dom";\nimport "./index.css";\nimport App from "./App";\nReactDOM.render(/* @__PURE__ */ React.createElement(React.StrictMode, null, /* @__PURE__ */ React.createElement(App, null)), document.getElementById("root"));\n'`
-vite:import-analysis:`'import __vite__cjsImport0_react from "/node_modules/.vite/react.js?v=a265756d"; const React = __vite__cjsImport0_react.__esModule ? __vite__cjsImport0_react.default : __vite__cjsImport0_react;\nimport __vite__cjsImport1_reactDom from "/node_modules/.vite/react-dom.js?v=a265756d"; const ReactDOM = __vite__cjsImport1_reactDom.__esModule ? __vite__cjsImport1_reactDom.default : __vite__cjsImport1_reactDom;\nimport "/src/index.css";\nimport App from "/src/App.tsx";\nReactDOM.render(/* @__PURE__ */ React.createElement(React.StrictMode, null, /* @__PURE__ */ React.createElement(App, null)), document.getElementById("root"));\n'`
-
-`'import __vite__cjsImport0_react from "/node_modules/.vite/react.js?v=a265756d"; const React = __vite__cjsImport0_react.__esModule ? __vite__cjsImport0_react.default : __vite__cjsImport0_react;\nimport __vite__cjsImport1_reactDom from "/node_modules/.vite/react-dom.js?v=a265756d"; const ReactDOM = __vite__cjsImport1_reactDom.__esModule ? __vite__cjsImport1_reactDom.default : __vite__cjsImport1_reactDom;\nimport "/src/index.css";\nimport App from "/src/App.tsx";\nimport {a} from "/src/afafa.ts";\nconsole.log("a", a);\nReactDOM.render(/* @__PURE__ */ React.createElement(React.StrictMode, null, /* @__PURE__ */ React.createElement(App, null)), document.getElementById("root"));\n'`
-以及vite:define、vite:json等中间件也会执行，他们会发挥各自的职能。
+#### vite:import-analysis
+ 
+在`import-analysis`中，import statement得以转换。WIP
